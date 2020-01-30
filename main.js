@@ -20,11 +20,9 @@ Animation.prototype.drawFrame = function (entity, tick, ctx, x, y) {
     if (this.isDone()) {
         if (this.loop) this.elapsedTime = 0;
     }
-    var frame = this.currentFrame();
-    var xindex = 0;
-    var yindex = 0;
-    xindex = frame % this.sheetWidth;
-    yindex = Math.floor(frame / this.sheetWidth);
+    let frame = this.currentFrame();
+    let xindex = frame % this.sheetWidth;
+    let yindex = Math.floor(frame / this.sheetWidth);
 
 
     switch (entity.state) {
@@ -73,6 +71,30 @@ Animation.prototype.drawFrame = function (entity, tick, ctx, x, y) {
             }
             break;
 
+        case 'ship':
+            if (entity.direction === 'up') {
+                ctx.drawImage(this.spriteSheet, this.startX +
+                    (this.currentFrame() * this.frameWidth),
+                    this.startY, this.frameWidth, this.frameHeight,
+                    x, y, this.frameWidth * this.scale,
+                    this.frameHeight * this.scale);
+            }
+            else if (entity.direction === 'down') {
+                ctx.drawImage(this.spriteSheet, this.startX +
+                    (this.currentFrame() * this.frameWidth),
+                    this.startY, this.frameWidth, this.frameHeight,
+                    x, y, this.frameWidth * this.scale,
+                    this.frameHeight * this.scale);
+            }
+            else {
+                ctx.drawImage(this.spriteSheet, this.startX +
+                    (this.currentFrame() * this.frameWidth),
+                    this.startY, this.frameWidth, this.frameHeight,
+                    x, y, this.frameWidth * this.scale,
+                    this.frameHeight * this.scale);
+            }
+            break;
+
         default:
             ctx.drawImage(this.spriteSheet, this.startX,
                 this.startY, this.frameWidth, this.frameHeight,
@@ -91,7 +113,6 @@ Animation.prototype.isDone = function () {
     return (this.elapsedTime >= this.totalTime);
 };
 
-// no inheritance
 function Background(game, spritesheet) {
     this.name = 'Background';
     this.x = 0;
@@ -237,11 +258,49 @@ SlowStar.prototype.draw = function () {
     this.animations.drawFrame(this, this.game.clockTick, this.ctx, this.x, this.y);
 };
 
+function Spaceship(game, spritesheet) {
+    this.name = 'Ship';
+    this.animations = new Animation(spritesheet, 0, 0, 40, 32, 4, 0.75, 4, true, 0.8);
+    this.x = 0;
+    this.y = 85;
+    this.speed = 100;
+    this.game = game;
+    this.ctx = game.ctx;
+    this.state = 'ship';
+    this.direction = 'up';
+}
+
+Spaceship.prototype.update = function () {
+    if (this.animations.currentFrame() === 0) {
+        this.direction = 'up';
+        this.x += this.game.clockTick * this.speed;
+        this.y += 1.5;
+    }
+    else if (this.animations.currentFrame() === 1 || this.animations.currentFrame() === 3) {
+        this.direction = 'straight';
+        this.x += this.game.clockTick * this.speed;
+    }
+    else if (this.animations.currentFrame() === 2) {
+        this.direction = 'down';
+        this.x += this.game.clockTick * this.speed;
+        this.y -= 1.5;
+    }
+
+    if (this.x > 1024) {
+        this.x = -100
+    }
+};
+
+Spaceship.prototype.draw = function () {
+    this.animations.drawFrame(this, this.game.clockTick, this.ctx, this.x, this.y);
+};
+
 
 AM.queueDownload("./img/bg.png");
 AM.queueDownload("./img/alienSprites.png");
 AM.queueDownload("./img/star.png");
 AM.queueDownload('./img/starReverse.png');
+AM.queueDownload('./img/spaceship.png');
 
 AM.downloadAll(function () {
     var canvas = document.getElementById("gameWorld");
@@ -256,7 +315,7 @@ AM.downloadAll(function () {
     gameEngine.addEntity(new Alien(gameEngine, AM.getAsset("./img/alienSprites.png")));
     gameEngine.addEntity(new ShootingStar(gameEngine, AM.getAsset("./img/star.png")));
     gameEngine.addEntity(new SlowStar(gameEngine, AM.getAsset("./img/starReverse.png")));
-
+    gameEngine.addEntity(new Spaceship(gameEngine, AM.getAsset("./img/spaceship.png")));
 
     console.log("All Done!");
 });
